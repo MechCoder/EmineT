@@ -11,8 +11,9 @@ from keras.optimizers import Adam
 from keras import backend as K
 
 from math import pi
-from utils import gen_audio_phonemes_pairs
+from utils import audio_amplitudes_gen
 from utils import write_audio_utils
+
 # Hyper-Parameters
 hidden_size = 1000
 inter_dim = 400

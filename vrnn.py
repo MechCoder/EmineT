@@ -13,12 +13,12 @@ from keras.optimizers import Adam
 from keras import backend as K
 
 from math import pi
-from utils import gen_audio_phonemes_pairs
+from utils import audio_amplitudes_gen
 
 
-def train(lstm_size=1000, z_size=100, batch_size=32, fc_size=400,
-          checkpoint_dir="vrnn_checkpoints", learning_rate=0.001, clip_grad=5.0,
-          num_epochs=50, save_every=5):
+def train(train_dir, valid_dir=None, lstm_size=1000, z_size=100, batch_size=32,
+          fc_size=400, checkpoint_dir="vrnn_checkpoints", learning_rate=0.001,
+          clip_grad=5.0, num_epochs=50, save_every=5):
     num_steps = 40
     in_dim = 200
 
@@ -86,12 +86,19 @@ def train(lstm_size=1000, z_size=100, batch_size=32, fc_size=400,
     encoder = Model(input=[input_, input_shift], output=Z_mean)
 
     vae.compile(optimizer=adam, loss=variational_loss)
-    vae.fit_generator(
-        gen_audio_phonemes_pairs(return_y=True),
-        samples_per_epoch=batch_size*545, verbose=2,
-        nb_epoch=num_epochs,
-        validation_data=gen_audio_phonemes_pairs(return_y=True, path="valid"),
-        nb_val_samples=batch_size*147, callbacks=callbacks_list)
+
+    if valid_dir is not None:
+        vae.fit_generator(
+            audio_amplitudes_gen(wavdir=train_dir),
+            samples_per_epoch=batch_size*545, verbose=2,
+            nb_epoch=num_epochs,
+            validation_data=audio_amplitudes_gen(wavdir=valid_dir),
+            nb_val_samples=batch_size*147, callbacks=callbacks_list)
+    else:
+        vae.fit_generator(
+            audio_amplitudes_gen(wavdir=train_dir),
+            samples_per_epoch=batch_size*545, verbose=2,
+            nb_epoch=num_epochs, callbacks=callbacks_list)
 
 
 if __name__ == "__main__":
@@ -100,6 +107,12 @@ if __name__ == "__main__":
     parser.add_argument(
         '--checkpoint_dir', nargs="?", default="vrnn_checkpoints", type=str,
         help="Directory to store checkpoints.")
+    parser.add_argument(
+        '--train_dir', nargs="?", default="train_dir", type=str,
+        help="Directory that contains train wav files to train.")
+    parser.add_argument(
+        '--valid_dir', nargs="?", default=None,
+        help="Directory that contains validation wav files.")
     parser.add_argument(
         '--lstm_size', nargs="?", default=1000, type=int,
         help="Number of hidden lstm units.")
@@ -120,7 +133,8 @@ if __name__ == "__main__":
         help="Save the model every save_every number of epochs.")
 
     args = parser.parse_args()
-    train(z_size=args.z_size, lstm_size=args.lstm_size,
+    train(train_dir=args.train_dir, valid_dir=args.valid_dir,
+          z_size=args.z_size, lstm_size=args.lstm_size,
           checkpoint_dir=args.checkpoint_dir, batch_size=args.batch_size,
           fc_size=args.fc_size, clip_grad=args.clip_grad,
           learning_rate=args.learning_rate, num_epochs=args.num_epochs,
