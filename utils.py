@@ -71,8 +71,9 @@ def init_phonemes(phonemes, phonemes_times, start_time, num_steps,
     return step_phonemes
 
 
-def audio_amplitudes_gen(wavdir, phdir=None, batch_size=32, step_length=0.0125,
-                         num_steps=40, random_state=None, step_shift=0):
+def audio_amplitudes_gen(wavdir, phdir=None, batch_size=32,
+                         num_steps=40, random_state=None, step_shift=0,
+                         wav_dim=200):
     """
     Audio raw-amplitude batch generator.
 
@@ -93,8 +94,8 @@ def audio_amplitudes_gen(wavdir, phdir=None, batch_size=32, step_length=0.0125,
     ys = []
     startptr = 0
     song_ind = 0
-    sample_size = int(step_length * num_steps * 16000)
-    step_size = int(step_length * 16000)
+    step_length = wav_dim / 16000.0
+    sample_size = int(wav_dim * num_steps)
 
     curr_wav = wavfiles[song_ind % n_songs]
     wavpath = os.path.join(wavdir, wavfiles[song_ind % n_songs])
@@ -119,11 +120,11 @@ def audio_amplitudes_gen(wavdir, phdir=None, batch_size=32, step_length=0.0125,
         batch_ind = 0
 
         while batch_ind < batch_size:
-            if startptr + sample_size + step_size <= len(current_amps):
+            if startptr + sample_size + wav_dim <= len(current_amps):
                 x = np.reshape(
                     current_amps[startptr: startptr + sample_size], (num_steps, -1))
                 y = np.reshape(
-                    current_amps[startptr + step_size : startptr + sample_size + step_size],
+                    current_amps[startptr + wav_dim: startptr + sample_size + wav_dim],
                     (num_steps, -1))
                 xs.append(x)
                 ys.append(y)
@@ -164,6 +165,7 @@ def audio_amplitudes_gen(wavdir, phdir=None, batch_size=32, step_length=0.0125,
             batch_phonemes = np.array(batch_phonemes)
             yield ([xs, ys, batch_phonemes], ys)
         else:
+            print(xs.shape)
             yield ([xs, ys], ys)
 
 
