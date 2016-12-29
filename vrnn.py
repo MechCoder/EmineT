@@ -15,10 +15,10 @@ from keras import backend as K
 from math import pi
 from new_audio_utils import gen_audio_phonemes_pairs
 
-# Hyper-Parameters
-def train(lstm_size=1000, z_size=100, batch_size=32,
-          fc_size=400, checkpoint_dir="vrnn_checkpoints",
-          learning_rate=0.001, clip_grad=5.0, num_epochs=5):
+
+def train(lstm_size=1000, z_size=100, batch_size=32, fc_size=400,
+          checkpoint_dir="vrnn_checkpoints", learning_rate=0.001, clip_grad=5.0,
+          num_epochs=50, save_every=5):
     num_steps = 40
     in_dim = 200
 
@@ -78,22 +78,12 @@ def train(lstm_size=1000, z_size=100, batch_size=32,
 
     filepath = os.path.join(checkpoint_dir, "weights-{epoch:02d}.hdf5")
     checkpoint = SavePeriodicCheckpoint(filepath, monitor='val_loss', verbose=1,
-                                        n_epochs=5)
+                                        n_epochs=save_every)
     callbacks_list = [checkpoint]
 
-    adam = Adam(lr=0.001, clipnorm=5.0)
+    adam = Adam(lr=learning_rate, clipnorm=clip_grad)
     vae = Model(input=[input_, input_shift], output=out_mu)
     encoder = Model(input=[input_, input_shift], output=Z_mean)
-
-    # checkpoint_files = sorted(os.listdir("vrnn_checkpoints"))
-    # if len(checkpoint_files) != 0:
-    #     print("Loading weights")
-    #     # Prevents the previous checkpoints from getting over-written
-    #     for c in checkpoint_files:
-    #         curr_ckpt = os.path.join(checkpoint_dir, c)
-    #         new_name = os.path.join(checkpoint_dir, "prev_" + c)
-    #         os.rename(curr_ckpt, new_name)
-    #     vae.load_weights(new_name)
 
     vae.compile(optimizer=adam, loss=variational_loss)
     vae.fit_generator(
@@ -108,19 +98,30 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Optional app description')
 
     parser.add_argument(
-        '--checkpoint_dir', nargs="?", default="vrnn_checkpoints", type=str)
+        '--checkpoint_dir', nargs="?", default="vrnn_checkpoints", type=str,
+        help="Directory to store checkpoints.")
     parser.add_argument(
-        '--lstm_size', nargs="?", default=1000, type=int)
-    parser.add_argument('--z_size', nargs="?", default=100, type=int)
-    parser.add_argument('--batch_size', nargs="?", default=32, type=int)
-    parser.add_argument('--fc_size', nargs="?", default=400, type=int)
-    parser.add_argument('--learning_rate', nargs="?", default=0.001, type=float)
-    parser.add_argument('--clip_grad', nargs="?", default=5.0, type=float)
-    parser.add_argument('--num_epochs', nargs="?", default=50, type=int)
+        '--lstm_size', nargs="?", default=1000, type=int,
+        help="Number of hidden lstm units.")
+    parser.add_argument('--z_size', nargs="?", default=100, type=int,
+        help="Latent size dimensions.")
+    parser.add_argument('--batch_size', nargs="?", default=32, type=int,
+        help="Batch size.")
+    parser.add_argument('--fc_size', nargs="?", default=400, type=int,
+        help="Dimension of the input fully-connected layer before providing as "
+        "input to LSTM")
+    parser.add_argument('--learning_rate', nargs="?", default=0.001, type=float,
+        help="Learning rate of the Adam optimizer.")
+    parser.add_argument('--clip_grad', nargs="?", default=5.0, type=float,
+        help="Clip the value of gradients above clip_grad to clip_grad")
+    parser.add_argument('--num_epochs', nargs="?", default=50, type=int,
+        help="Number of epochs")
+    parser.add_argument('--save_every', nargs="?", default=5, type=int,
+        help="Save the model every save_every number of epochs.")
 
     args = parser.parse_args()
-    print(args.z_size)
     train(z_size=args.z_size, lstm_size=args.lstm_size,
           checkpoint_dir=args.checkpoint_dir, batch_size=args.batch_size,
           fc_size=args.fc_size, clip_grad=args.clip_grad,
-          learning_rate=args.learning_rate, num_epochs=args.num_epochs)
+          learning_rate=args.learning_rate, num_epochs=args.num_epochs,
+          save_every=args.save_every)
