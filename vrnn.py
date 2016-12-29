@@ -13,7 +13,7 @@ from keras.optimizers import Adam
 from keras import backend as K
 
 from math import pi
-from new_audio_utils import gen_audio_phonemes_pairs
+from utils import gen_audio_phonemes_pairs
 
 
 def train(lstm_size=1000, z_size=100, batch_size=32, fc_size=400,
@@ -78,7 +78,7 @@ def train(lstm_size=1000, z_size=100, batch_size=32, fc_size=400,
 
     filepath = os.path.join(checkpoint_dir, "weights-{epoch:02d}.hdf5")
     checkpoint = SavePeriodicCheckpoint(filepath, monitor='val_loss', verbose=1,
-                                        n_epochs=save_every)
+                                        n_epochs=5)
     callbacks_list = [checkpoint]
 
     adam = Adam(lr=learning_rate, clipnorm=clip_grad)
