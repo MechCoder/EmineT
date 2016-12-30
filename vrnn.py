@@ -18,7 +18,7 @@ from utils import samples_per_epoch
 
 
 def train(train_dir, valid_dir=None, lstm_size=1000, num_steps=40,
-          z_size=100, batch_size=32, fc_size=400, wav_dim=200,
+          z_dim=100, batch_size=32, fc_dim=400, wav_dim=200,
           checkpoint_dir="vrnn_checkpoints", learning_rate=0.001, clip_grad=5.0,
           num_epochs=50, save_every=5):
     if not os.path.exists(checkpoint_dir):
@@ -28,25 +28,25 @@ def train(train_dir, valid_dir=None, lstm_size=1000, num_steps=40,
 
     # Input but shifed by one-time step
     input_shift = Input(batch_shape=(batch_size, num_steps, wav_dim))
-    higher = TimeDistributed(Dense(fc_size, activation="tanh"))(input_)
+    higher = TimeDistributed(Dense(fc_dim, activation="tanh"))(input_)
 
     # Vanilla LSTM
     hidden = LSTM(lstm_size, return_sequences=True)(higher)
 
     # Prior on the latent variables (z_{t + 1}) is Dependent on the input
-    prior_mean = TimeDistributed(Dense(z_size, activation="tanh"))(hidden)
-    prior_log_sigma = TimeDistributed(Dense(z_size, activation="relu"))(hidden)
+    prior_mean = TimeDistributed(Dense(z_dim, activation="tanh"))(hidden)
+    prior_log_sigma = TimeDistributed(Dense(z_dim, activation="relu"))(hidden)
 
     # Merge hidden-state and input to form the encoder network.
-    hidden_to_z = TimeDistributed(Dense(z_size, activation="relu"))(hidden)
-    input_to_z = TimeDistributed(Dense(z_size, activation="relu"))(input_shift)
+    hidden_to_z = TimeDistributed(Dense(z_dim, activation="relu"))(hidden)
+    input_to_z = TimeDistributed(Dense(z_dim, activation="relu"))(input_shift)
     hidden_with_input = merge([hidden_to_z, input_to_z], mode="sum")
-    Z_mean = TimeDistributed(Dense(z_size, activation="tanh"))(hidden_with_input)
-    Z_log_sigma = TimeDistributed(Dense(z_size, activation="relu"))(hidden_with_input)
+    Z_mean = TimeDistributed(Dense(z_dim, activation="tanh"))(hidden_with_input)
+    Z_log_sigma = TimeDistributed(Dense(z_dim, activation="relu"))(hidden_with_input)
 
     def sampling(args):
         Z_mean, Z_log_sigma = args
-        epsilon = K.random_normal(shape=(batch_size, num_steps, z_size))
+        epsilon = K.random_normal(shape=(batch_size, num_steps, z_dim))
         return Z_mean + K.exp(Z_log_sigma) * epsilon
 
     samples = Lambda(sampling)([Z_mean, Z_log_sigma])
@@ -113,10 +113,10 @@ def train(train_dir, valid_dir=None, lstm_size=1000, num_steps=40,
 
 
 if __name__ == "__main__":
-    args = parse_args()
+    args = parse_args(mode="train")
     train(train_dir=args.train_dir, valid_dir=args.valid_dir,
-          z_size=args.z_size, lstm_size=args.lstm_size, num_steps=args.num_steps,
+          z_dim=args.z_dim, lstm_size=args.lstm_size, num_steps=args.num_steps,
           checkpoint_dir=args.checkpoint_dir, batch_size=args.batch_size,
-          fc_size=args.fc_size, clip_grad=args.clip_grad,
+          fc_dim=args.fc_dim, clip_grad=args.clip_grad,
           learning_rate=args.learning_rate, num_epochs=args.num_epochs,
           save_every=args.save_every, wav_dim=args.wav_dim)
