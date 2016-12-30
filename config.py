@@ -19,6 +19,10 @@ def parse_args(mode="train"):
         parser.add_argument(
             '--save_every', nargs="?", default=5, type=int,
             help="Save the model every save_every number of epochs.")
+        parser.add_argument('--learning_rate', nargs="?", default=0.001, type=float,
+            help="Learning rate of the Adam optimizer.")
+        parser.add_argument('--clip_grad', nargs="?", default=5.0, type=float,
+            help="Clip the value of gradients above clip_grad to clip_grad")
     elif mode == "predict":
         parser.add_argument(
             '--wav_dir', nargs="?", type=str,
@@ -45,8 +49,4 @@ def parse_args(mode="train"):
     parser.add_argument('--fc_dim', nargs="?", default=400, type=int,
         help="Dimension of the input fully-connected layer before providing as "
         "input to LSTM")
-    parser.add_argument('--learning_rate', nargs="?", default=0.001, type=float,
-        help="Learning rate of the Adam optimizer.")
-    parser.add_argument('--clip_grad', nargs="?", default=5.0, type=float,
-        help="Clip the value of gradients above clip_grad to clip_grad")
     return parser.parse_args()
