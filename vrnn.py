@@ -1,7 +1,6 @@
+from math import pi
 import os
-import argparse
 
-from callbacks import SavePeriodicCheckpoint
 from keras.layers import Input
 from keras.layers import Lambda
 from keras.layers import LSTM
@@ -12,7 +11,8 @@ from keras.models import Model
 from keras.optimizers import Adam
 from keras import backend as K
 
-from math import pi
+from callbacks import SavePeriodicCheckpoint
+from config import parse_args
 from utils import audio_amplitudes_gen
 from utils import samples_per_epoch
 
@@ -82,8 +82,6 @@ def train(train_dir, valid_dir=None, lstm_size=1000, num_steps=40,
 
     adam = Adam(lr=learning_rate, clipnorm=clip_grad)
     vae = Model(input=[input_, input_shift], output=out_mu)
-    encoder = Model(input=[input_, input_shift], output=Z_mean)
-
     vae.compile(optimizer=adam, loss=variational_loss)
 
     train_gen = audio_amplitudes_gen(
@@ -115,43 +113,7 @@ def train(train_dir, valid_dir=None, lstm_size=1000, num_steps=40,
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Optional app description')
-
-    parser.add_argument(
-        '--checkpoint_dir', nargs="?", default="vrnn_checkpoints", type=str,
-        help="Directory to store checkpoints.")
-    parser.add_argument(
-        '--train_dir', nargs="?", default="train_dir", type=str,
-        help="Directory that contains train wav files to train.")
-    parser.add_argument(
-        '--valid_dir', nargs="?", default=None,
-        help="Directory that contains validation wav files.")
-    parser.add_argument(
-        '--lstm_size', nargs="?", default=1000, type=int,
-        help="Number of hidden lstm units.")
-    parser.add_argument(
-        '--num_steps', nargs="?", default=40, type=int,
-        help="Number of lstm time-steps.")
-    parser.add_argument(
-        '--wav_dim', nargs="?", default=200, type=int,
-        help="Dimension of the input waveform.")
-    parser.add_argument('--z_size', nargs="?", default=100, type=int,
-        help="Latent size dimensions.")
-    parser.add_argument('--batch_size', nargs="?", default=32, type=int,
-        help="Batch size.")
-    parser.add_argument('--fc_size', nargs="?", default=400, type=int,
-        help="Dimension of the input fully-connected layer before providing as "
-        "input to LSTM")
-    parser.add_argument('--learning_rate', nargs="?", default=0.001, type=float,
-        help="Learning rate of the Adam optimizer.")
-    parser.add_argument('--clip_grad', nargs="?", default=5.0, type=float,
-        help="Clip the value of gradients above clip_grad to clip_grad")
-    parser.add_argument('--num_epochs', nargs="?", default=50, type=int,
-        help="Number of epochs")
-    parser.add_argument('--save_every', nargs="?", default=5, type=int,
-        help="Save the model every save_every number of epochs.")
-
-    args = parser.parse_args()
+    args = parse_args()
     train(train_dir=args.train_dir, valid_dir=args.valid_dir,
           z_size=args.z_size, lstm_size=args.lstm_size, num_steps=args.num_steps,
           checkpoint_dir=args.checkpoint_dir, batch_size=args.batch_size,
