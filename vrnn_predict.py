@@ -10,11 +10,12 @@ from keras.models import Model
 from keras.optimizers import Adam
 from keras import backend as K
 
+from config import parse_args
 from math import pi
 from utils import audio_amplitudes_gen
 from utils import write_audio_utils
 
-def predict(wav_dir, model, pred_dir, lstm_size=1000, num_steps=40,
+def predict(wav_dir, model, write_dir, lstm_size=1000, num_steps=40,
             z_dim=100, batch_size=32, fc_dim=400, wav_dim=200,
             learning_rate=0.001, clip_grad=5.0):
     input_ = Input(batch_shape=(batch_size, num_steps, wav_dim))
@@ -23,7 +24,7 @@ def predict(wav_dir, model, pred_dir, lstm_size=1000, num_steps=40,
     higher = TimeDistributed(Dense(fc_dim, activation="tanh"))(input_)
 
     # Vanilla LSTM
-    hidden = LSTM(hidden_size, return_sequences=True)(higher)
+    hidden = LSTM(lstm_size, return_sequences=True)(higher)
 
     # Prior on the latent variables (z_{t + 1}) is Dependent on the input
     prior_mean = TimeDistributed(Dense(z_dim, activation="tanh"))(hidden)
@@ -71,8 +72,8 @@ def predict(wav_dir, model, pred_dir, lstm_size=1000, num_steps=40,
     vae = Model(input=[input_, input_shift], output=out_mu)
     vae.load_weights(model)
 
-    if not os.path.exists(pred_dir):
-        os.mkdir(pred_dir)
+    if not os.path.exists(write_dir):
+        os.mkdir(write_dir)
 
     counter = 0
     pred_gen = audio_amplitudes_gen(
@@ -84,8 +85,8 @@ def predict(wav_dir, model, pred_dir, lstm_size=1000, num_steps=40,
         counter += 1
 
         print("Writing audio %d" % counter)
-        true_path = os.path.join(epoch_dir, "%d_true.wav" % counter)
-        pred_path = os.path.join(epoch_dir, "%d_pred.wav" % counter)
+        true_path = os.path.join(write_dir, "%d_true.wav" % counter)
+        pred_path = os.path.join(write_dir, "%d_pred.wav" % counter)
         write_audio_utils(true, true_path)
         write_audio_utils(pred, pred_path)
 
@@ -94,7 +95,7 @@ def predict(wav_dir, model, pred_dir, lstm_size=1000, num_steps=40,
 
 if __name__ == "__main__":
     args = parse_args(mode="predict")
-    predict(args.wav_dir, args.model, args.pred_dir,
+    predict(args.wav_dir, args.model, args.write_dir,
             z_dim=args.z_dim, lstm_size=args.lstm_size, num_steps=args.num_steps,
             batch_size=args.batch_size,
             fc_dim=args.fc_dim, clip_grad=args.clip_grad,

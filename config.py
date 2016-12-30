@@ -21,13 +21,13 @@ def parse_args(mode="train"):
             help="Save the model every save_every number of epochs.")
     elif mode == "predict":
         parser.add_argument(
-            '--wav_dir', nargs=1, type=str,
+            '--wav_dir', nargs="?", type=str,
             help="Directory that contains wav files for prediction.")
         parser.add_argument(
-            '--model', nargs=1, type=str, help="Path to the trained model")
+            '--model', nargs="?", type=str, help="Path to the trained model")
         parser.add_argument(
-            '--pred_dir', nargs="?", default="wav_dir", type=str,
-            help="Directory that the predicted wav files will be written to.")
+            '--write_dir', nargs="?", default="write_dir", type=str,
+            help="Directory that the true and predicted wav files will be written to.")
 
     parser.add_argument(
         '--lstm_size', nargs="?", default=1000, type=int,
