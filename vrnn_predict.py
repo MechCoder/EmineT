@@ -87,6 +87,7 @@ def predict(wav_dir, model, write_dir, lstm_size=1000, num_steps=40,
         pred_path = os.path.join(write_dir, "%d_pred.wav" % counter)
         write_audio(true, true_path)
         write_audio(pred, pred_path)
+        counter += 1
 
 
 if __name__ == "__main__":
