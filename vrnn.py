@@ -14,6 +14,7 @@ from keras import backend as K
 
 from math import pi
 from utils import audio_amplitudes_gen
+from utils import samples_per_epoch
 
 
 def train(train_dir, valid_dir=None, lstm_size=1000, num_steps=40,
@@ -88,20 +89,28 @@ def train(train_dir, valid_dir=None, lstm_size=1000, num_steps=40,
     train_gen = audio_amplitudes_gen(
         wavdir=train_dir, num_steps=num_steps, batch_size=batch_size,
         wav_dim=wav_dim)
+    n_train_per_epoch = samples_per_epoch(
+        wavdir=train_dir, batch_size=batch_size, num_steps=num_steps,
+        wav_dim=wav_dim)
 
     if valid_dir is not None:
         valid_gen = audio_amplitudes_gen(
             wavdir=valid_dir, num_steps=num_steps, batch_size=batch_size,
             wav_dim=wav_dim)
-        vae.fit_generator(train_gen, samples_per_epoch=batch_size*545,
+        n_val_per_epoch = samples_per_epoch(
+            wavdir=valid_dir, batch_size=batch_size,
+            num_steps=num_steps, wav_dim=wav_dim)
+
+        vae.fit_generator(train_gen,
+                          samples_per_epoch=batch_size*n_train_per_epoch,
                           verbose=2, nb_epoch=num_epochs,
                           validation_data=valid_gen,
-                          nb_val_samples=batch_size*147,
+                          nb_val_samples=batch_size*n_val_per_epoch,
                           callbacks=callbacks_list)
     else:
         vae.fit_generator(
             audio_amplitudes_gen(wavdir=train_dir),
-            samples_per_epoch=batch_size*545, verbose=2,
+            samples_per_epoch=batch_size*n_train_per_epoch, verbose=2,
             nb_epoch=num_epochs, callbacks=callbacks_list)
 
 

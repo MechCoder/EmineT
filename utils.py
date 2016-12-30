@@ -71,6 +71,19 @@ def init_phonemes(phonemes, phonemes_times, start_time, num_steps,
     return step_phonemes
 
 
+def samples_per_epoch(wavdir, batch_size=32, num_steps=40, wav_dim=200):
+    wavfiles = os.listdir(wavdir)
+    batch_dim = wav_dim * num_steps * batch_size
+    n_samples = 0
+    remainder = 0
+    for wavfile in wavfiles:
+        wavpath = os.path.join(wavdir, wavfile)
+        _, amps = read(wavpath)
+        n_samples += int(len(amps) / batch_dim)
+        remainder += len(amps) % batch_dim
+    return n_samples + int(remainder / batch_dim)
+
+
 def audio_amplitudes_gen(wavdir, phdir=None, batch_size=32,
                          num_steps=40, random_state=None, step_shift=0,
                          wav_dim=200):
@@ -83,7 +96,7 @@ def audio_amplitudes_gen(wavdir, phdir=None, batch_size=32,
     num_steps - Number of time steps of each sample.
     """
     rng = np.random.RandomState(random_state)
-    limit_counter = 545
+    n_samples = samples_per_epoch(wavdir, batch_size, num_steps, wav_dim)
 
     if phdir is not None:
         phoneme_to_id = build_phonemes_vocab(phdir)
@@ -112,6 +125,7 @@ def audio_amplitudes_gen(wavdir, phdir=None, batch_size=32,
     start_time = 0.0
     counter = 0
 
+    # XXX: Ugly, but I'll change it some other day.
     while True:
         counter += 1
         xs = []
@@ -156,7 +170,7 @@ def audio_amplitudes_gen(wavdir, phdir=None, batch_size=32,
                 start_time = 0.0
 
         batch_ind = 0
-        if counter % limit_counter == 0:
+        if counter % n_samples == 0:
             rng.shuffle(wavfiles)
         xs = np.array(xs)
         ys = np.array(ys)
@@ -165,7 +179,6 @@ def audio_amplitudes_gen(wavdir, phdir=None, batch_size=32,
             batch_phonemes = np.array(batch_phonemes)
             yield ([xs, ys, batch_phonemes], ys)
         else:
-            print(xs.shape)
             yield ([xs, ys], ys)
 
 
