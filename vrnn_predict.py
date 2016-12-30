@@ -14,6 +14,7 @@ from config import parse_args
 from math import pi
 from utils import audio_amplitudes_gen
 from utils import write_audio
+from vrnn_model import build_vrnn
 
 def predict(wav_dir, model, write_dir, lstm_size=1000, num_steps=40,
             z_dim=100, batch_size=32, fc_dim=400, wav_dim=200):

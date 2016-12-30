@@ -30,7 +30,7 @@ def train(train_dir, valid_dir=None, lstm_size=1000, num_steps=40,
                      learning_rate=learning_rate, clip_grad=clip_grad)
     filepath = os.path.join(checkpoint_dir, "weights-{epoch:02d}.hdf5")
     checkpoint = SavePeriodicCheckpoint(filepath, monitor='val_loss', verbose=1,
-                                        n_epochs=5)
+                                        n_epochs=save_every)
     callbacks_list = [checkpoint]
     train_gen = audio_amplitudes_gen(
         wavdir=train_dir, num_steps=num_steps, batch_size=batch_size,

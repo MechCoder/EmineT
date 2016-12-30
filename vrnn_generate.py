@@ -15,6 +15,7 @@ from callbacks import SavePeriodicCheckpoint
 from config import parse_args
 from utils import audio_amplitudes_gen
 from utils import samples_per_epoch
+from utils import write_audio
 from vrnn_model import build_vrnn
 
 
@@ -23,8 +24,7 @@ def generate(wav_dir, model, write_dir, lstm_size=1000, num_steps=40,
              num_gen=1):
     vae, decoder = build_vrnn(
         lstm_size=lstm_size, num_steps=num_steps, z_dim=z_dim,
-        batch_size=batch_size, fc_dim=fc_dim, wav_dim=wav_dim, mode="generate",
-        learning_rate=learning_rate, clip_grad=clip_grad))
+        batch_size=batch_size, fc_dim=fc_dim, wav_dim=wav_dim, mode="generate")
     vae.load_weights(model)
 
     gen = audio_amplitudes_gen(
@@ -35,13 +35,14 @@ def generate(wav_dir, model, write_dir, lstm_size=1000, num_steps=40,
     for (x_t, y_t), true in gen:
 
         true_path = os.path.join(write_dir, "%d_true.wav" % counter)
-        gen_dir = os.path.join(write_dir, counter)
+        gen_dir = os.path.join(write_dir, str(counter))
+        os.makedirs(gen_dir)
         for i in range(num_gen):
             pred = decoder.predict([x_t, y_t], batch_size=batch_size)
 
             print("Writing audio %d" % counter)
             pred_path = os.path.join(gen_dir, "%d.wav" % i)
-            write_audio_utils(pred, pred_path)
+            write_audio(pred, pred_path)
         counter += 1
 
 if __name__ == "__main__":
