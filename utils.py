@@ -86,7 +86,7 @@ def samples_per_epoch(wavdir, batch_size=32, num_steps=40, wav_dim=200):
 
 def audio_amplitudes_gen(wavdir, phdir=None, batch_size=32,
                          num_steps=40, random_state=None, step_shift=0,
-                         wav_dim=200):
+                         wav_dim=200, infinite=True):
     """
     Audio raw-amplitude batch generator.
 
@@ -171,7 +171,10 @@ def audio_amplitudes_gen(wavdir, phdir=None, batch_size=32,
 
         batch_ind = 0
         if counter % n_samples == 0:
-            rng.shuffle(wavfiles)
+            if infinite:
+                rng.shuffle(wavfiles)
+            else:
+                return
         xs = np.array(xs)
         ys = np.array(ys)
 
@@ -182,5 +185,5 @@ def audio_amplitudes_gen(wavdir, phdir=None, batch_size=32,
             yield ([xs, ys], ys)
 
 
-def write_audio_utils(batch, dest_path):
+def write_audio(batch, dest_path):
     write(dest_path, 16000, (batch.ravel() * 32768).astype(np.int16))

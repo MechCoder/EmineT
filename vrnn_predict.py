@@ -13,7 +13,7 @@ from keras import backend as K
 from config import parse_args
 from math import pi
 from utils import audio_amplitudes_gen
-from utils import write_audio_utils
+from utils import write_audio
 
 def predict(wav_dir, model, write_dir, lstm_size=1000, num_steps=40,
             z_dim=100, batch_size=32, fc_dim=400, wav_dim=200,
@@ -78,20 +78,16 @@ def predict(wav_dir, model, write_dir, lstm_size=1000, num_steps=40,
     counter = 0
     pred_gen = audio_amplitudes_gen(
         wavdir=wav_dir, num_steps=num_steps, batch_size=batch_size,
-        wav_dim=wav_dim)
+        wav_dim=wav_dim, infinite=False)
 
     for (x_t, y_t), true in pred_gen:
         pred = vae.predict([x_t, y_t], batch_size=batch_size)
-        counter += 1
-
         print("Writing audio %d" % counter)
         true_path = os.path.join(write_dir, "%d_true.wav" % counter)
         pred_path = os.path.join(write_dir, "%d_pred.wav" % counter)
-        write_audio_utils(true, true_path)
-        write_audio_utils(pred, pred_path)
+        write_audio(true, true_path)
+        write_audio(pred, pred_path)
 
-        if counter == 20:
-            break
 
 if __name__ == "__main__":
     args = parse_args(mode="predict")
