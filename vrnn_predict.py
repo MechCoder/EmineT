@@ -19,7 +19,8 @@ def predict(wav_dir, model, write_dir, lstm_size=1000, num_steps=40,
             z_dim=100, batch_size=32, fc_dim=400, wav_dim=200):
 
     vae = build_vrnn(lstm_size=lstm_size, num_steps=num_steps, z_dim=z_dim,
-                     batch_size=batch_size, fc_dim=fc_dim, wav_dim=wav_dim)
+                     batch_size=batch_size, fc_dim=fc_dim, wav_dim=wav_dim,
+                     mode="predict")
     vae.load_weights(model)
 
     if not os.path.exists(write_dir):

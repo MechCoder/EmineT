@@ -19,6 +19,9 @@ from utils import samples_per_epoch
 def build_vrnn(lstm_size=1000, num_steps=40,
                z_dim=100, batch_size=32, fc_dim=400, wav_dim=200,
                learning_rate=0.001, clip_grad=5.0, mode="train"):
+    vae, decoder = build_vrnn(
+        lstm_size=lstm_size, num_steps=num_steps, z_dim=z_dim,
+        batch_size=batch_size, fc_dim=fc_dim, wav_dim=wav_dim, mode="generate")
     input_ = Input(batch_shape=(batch_size, num_steps, wav_dim))
 
     # Input but shifed by one-time step
@@ -75,8 +78,19 @@ def build_vrnn(lstm_size=1000, num_steps=40,
                                         n_epochs=5)
     callbacks_list = [checkpoint]
 
-    adam = Adam(lr=learning_rate, clipnorm=clip_grad)
     vae = Model(input=[input_, input_shift], output=out_mu)
     if mode == "train":
+        adam = Adam(lr=learning_rate, clipnorm=clip_grad)
         vae.compile(optimizer=adam, loss=variational_loss)
+        return vae
+    elif mode == "generate":
+        adam = Adam(lr=learning_rate, clipnorm=clip_grad)
+        vae.compile(optimizer=adam, loss=variational_loss)
+        prior = vae.layers[-5]
+        sampled_from_prior = prior([prior_mean, prior_log_sigma])
+        x_given_z = vae.layers[-3](sampled_from_prior)
+        merge_samples = merge([hidden_to_out, x_given_z], mode="sum")
+        gen_x = vae.layers[-1](merge_samples)
+        decoder = Model(input=[input_, input_shift], output=gen_x)
+        return vae, decoder
     return vae

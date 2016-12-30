@@ -23,7 +23,7 @@ def parse_args(mode="train"):
             help="Learning rate of the Adam optimizer.")
         parser.add_argument('--clip_grad', nargs="?", default=5.0, type=float,
             help="Clip the value of gradients above clip_grad to clip_grad")
-    elif mode == "predict":
+    elif mode in ["predict", "generate"]:
         parser.add_argument(
             '--wav_dir', nargs="?", type=str,
             help="Directory that contains wav files for prediction.")
@@ -32,6 +32,11 @@ def parse_args(mode="train"):
         parser.add_argument(
             '--write_dir', nargs="?", default="write_dir", type=str,
             help="Directory that the true and predicted wav files will be written to.")
+
+        if mode == "generate":
+            parser.add_argument(
+                '--num_gen', nargs="?", default=1, type=int,
+                help="Number of audio clips to generate.")
 
     parser.add_argument(
         '--lstm_size', nargs="?", default=1000, type=int,
