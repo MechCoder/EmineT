@@ -30,13 +30,13 @@ def build_vrnn(lstm_size=1000, num_steps=40,
         # We should be able to use an Embedding layer directly here but
         # the Embedding layer does not work with clipnorm.
         # XXX: https://github.com/fchollet/keras/issues/3859
-        ph_input = Input(batch_shape=(batch_size, num_steps, phoneme_length))
+        ph_input = Input(batch_shape=(batch_size, num_steps, 40))
         counts = K.expand_dims(K.sum(ph_input, axis=-1), -1)
 
         # Merge input from phonemes and audio.
-        cbow = TimeDistributed(Dense(phonemes_embed_size))(ph_input)
+        cbow = TimeDistributed(Dense(fc_dim))(ph_input)
         cbow_averaged = Lambda(lambda x: x / counts)(cbow)
-        input_layer2 = TimeDistributed(Dense(phonemes_embed_size, activation="relu"))(input_)
+        input_layer2 = TimeDistributed(Dense(fc_dim, activation="relu"))(input_)
         to_lstm = merge([input_layer2, cbow_averaged], mode="sum")
     else:
         to_lstm = TimeDistributed(Dense(fc_dim, activation="tanh"))(input_)

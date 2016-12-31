@@ -20,7 +20,7 @@ from vrnn_model import build_vrnn
 
 
 def train(train_dir, lyr_dir, valid_dir=None, lyr_valid_dir=None,
-          valid_lstm_size=1000, num_steps=40,
+          lstm_size=1000, num_steps=40,
           z_dim=100, batch_size=32, fc_dim=400, wav_dim=200,
           checkpoint_dir="vrnn_checkpoints", learning_rate=0.001, clip_grad=5.0,
           step_shift=0, num_epochs=50, save_every=5):
