@@ -98,7 +98,7 @@ def audio_amplitudes_gen(wavdir, lyr_dir=None, batch_size=32,
     rng = np.random.RandomState(random_state)
     n_samples = samples_per_epoch(wavdir, batch_size, num_steps, wav_dim)
 
-    if phdir is not None:
+    if lyr_dir is not None:
         phoneme_to_id = build_phonemes_vocab(phdir)
 
     wavfiles = os.listdir(wavdir)
