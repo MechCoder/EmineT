@@ -10,9 +10,10 @@ def parse_args(mode="train", use_phonemes=True):
         parser.add_argument(
             '--lyr_dir', nargs="?", default="lyrics", type=str,
             help="Directory that contains lyrics corresponding to the train wav files.")
-        parser.add_argument(
-            '--lyr_valid_dir', nargs="?", default="val_lyrics", type=str,
-            help="Directory that contains lyrics corresponding to the val wav files.")
+        if mode == "train":
+            parser.add_argument(
+                '--lyr_valid_dir', nargs="?", default="val_lyrics", type=str,
+                help="Directory that contains lyrics corresponding to the val wav files.")
 
     if mode == "train":
         parser.add_argument(
