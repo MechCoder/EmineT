@@ -18,15 +18,30 @@ from utils import samples_per_epoch
 
 def build_vrnn(lstm_size=1000, num_steps=40,
                z_dim=100, batch_size=32, fc_dim=400, wav_dim=200,
-               learning_rate=0.001, clip_grad=5.0, mode="train"):
+               learning_rate=0.001, clip_grad=5.0, use_phonemes=False,
+               mode="train", step_shift=0):
     input_ = Input(batch_shape=(batch_size, num_steps, wav_dim))
 
     # Input but shifed by one-time step
     input_shift = Input(batch_shape=(batch_size, num_steps, wav_dim))
-    higher = TimeDistributed(Dense(fc_dim, activation="tanh"))(input_)
 
     # Vanilla LSTM
-    hidden = LSTM(lstm_size, return_sequences=True)(higher)
+    if use_phonemes:
+        # We should be able to use an Embedding layer directly here but
+        # the Embedding layer does not work with clipnorm.
+        # XXX: https://github.com/fchollet/keras/issues/3859
+        ph_input = Input(batch_shape=(batch_size, num_steps, phoneme_length))
+        counts = K.expand_dims(K.sum(ph_input, axis=-1), -1)
+
+        # Merge input from phonemes and audio.
+        cbow = TimeDistributed(Dense(phonemes_embed_size))(ph_input)
+        cbow_averaged = Lambda(lambda x: x / counts)(cbow)
+        input_layer2 = TimeDistributed(Dense(phonemes_embed_size, activation="relu"))(input_)
+        to_lstm = merge([input_layer2, cbow_averaged], mode="sum")
+    else:
+        to_lstm = TimeDistributed(Dense(fc_dim, activation="tanh"))(input_)
+
+    hidden = LSTM(lstm_size, return_sequences=True)(to_lstm)
 
     # Prior on the latent variables (z_{t + 1}) is Dependent on the input
     prior_mean = TimeDistributed(Dense(z_dim, activation="tanh"))(hidden)

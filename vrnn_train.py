@@ -55,7 +55,7 @@ def train(train_dir, valid_dir=None, lstm_size=1000, num_steps=40,
                           callbacks=callbacks_list)
     else:
         vae.fit_generator(
-            audio_amplitudes_gen(wavdir=train_dir),
+            train_gen,
             samples_per_epoch=batch_size*n_train_per_epoch, verbose=2,
             nb_epoch=num_epochs, callbacks=callbacks_list)
 

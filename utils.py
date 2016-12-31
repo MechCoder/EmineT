@@ -84,7 +84,7 @@ def samples_per_epoch(wavdir, batch_size=32, num_steps=40, wav_dim=200):
     return n_samples + int(remainder / batch_dim)
 
 
-def audio_amplitudes_gen(wavdir, phdir=None, batch_size=32,
+def audio_amplitudes_gen(wavdir, lyr_dir=None, batch_size=32,
                          num_steps=40, random_state=None, step_shift=0,
                          wav_dim=200, infinite=True):
     """
@@ -113,7 +113,7 @@ def audio_amplitudes_gen(wavdir, phdir=None, batch_size=32,
     curr_wav = wavfiles[song_ind % n_songs]
     wavpath = os.path.join(wavdir, wavfiles[song_ind % n_songs])
 
-    if phdir:
+    if lyr_dir:
         lyrpath = os.path.join(phdir, curr_wav[:-4] + ".txt")
         curr_phonemes = open(lyrpath, "r").readlines()
         phonemes_times = [float(c.strip().split(" ")[-1]) for c in curr_phonemes]
@@ -156,14 +156,14 @@ def audio_amplitudes_gen(wavdir, phdir=None, batch_size=32,
                 curr_wav = wavfiles[song_ind % n_songs]
                 wavpath = os.path.join(wavdir, curr_wav)
 
-                if phdir:
+                if lyr_dir:
                     lyrpath = os.path.join(phdir, curr_wav[:-4] + ".txt")
                 _, current_amps = read(wavpath)
 
                 startptr = 0
                 current_amps = current_amps / 32768.0
 
-                if phdir:
+                if lyr_dir:
                     curr_phonemes = open(lyrpath, "r").readlines()
                     phonemes_times = [float(c.strip().split(" ")[-1]) for c in curr_phonemes]
                     phonemes = [c.strip().split(" ")[0] for c in curr_phonemes]
@@ -178,7 +178,7 @@ def audio_amplitudes_gen(wavdir, phdir=None, batch_size=32,
         xs = np.array(xs)
         ys = np.array(ys)
 
-        if phdir:
+        if lyr_dir:
             batch_phonemes = np.array(batch_phonemes)
             yield ([xs, ys, batch_phonemes], ys)
         else:

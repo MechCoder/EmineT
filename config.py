@@ -1,7 +1,18 @@
 import argparse
 
-def parse_args(mode="train"):
+def parse_args(mode="train", use_phonemes=True):
     parser = argparse.ArgumentParser()
+
+    if use_phonemes:
+        parser.add_argument(
+            '--step_shift', nargs="?", default=0, type=int,
+            help="Number of steps by which the phonemes should be left-shifted by.")
+        parser.add_argument(
+            '--lyr_dir', nargs="?", default="lyrics", type=str,
+            help="Directory that contains lyrics corresponding to the train wav files.")
+        parser.add_argument(
+            '--lyr_valid_dir', nargs="?", default="val_lyrics", type=str,
+            help="Directory that contains lyrics corresponding to the val wav files.")
 
     if mode == "train":
         parser.add_argument(
