@@ -85,7 +85,10 @@ def build_vrnn(lstm_size=1000, num_steps=40,
         return (gaussian_log_likelihood(y_true, y_pred) +
                 KL_divergence(Z_mean, Z_log_sigma, prior_mean, prior_log_sigma))
 
-    vae = Model(input=[input_, input_shift], output=out_mu)
+    if use_phonemes:
+        vae = Model(input=[input_, input_shift, ph_input], output=out_mu)
+    else:
+        vae = Model(input=[input_, input_shift], output=out_mu)
     if mode == "train":
         adam = Adam(lr=learning_rate, clipnorm=clip_grad)
         vae.compile(optimizer=adam, loss=variational_loss)
