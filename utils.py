@@ -114,7 +114,7 @@ def audio_amplitudes_gen(wavdir, lyr_dir=None, batch_size=32,
     wavpath = os.path.join(wavdir, wavfiles[song_ind % n_songs])
 
     if lyr_dir:
-        lyrpath = os.path.join(phdir, curr_wav[:-4] + ".txt")
+        lyrpath = os.path.join(lyr_dir, curr_wav[:-4] + ".txt")
         curr_phonemes = open(lyrpath, "r").readlines()
         phonemes_times = [float(c.strip().split(" ")[-1]) for c in curr_phonemes]
         phonemes = [c.strip().split(" ")[0] for c in curr_phonemes]
@@ -145,7 +145,7 @@ def audio_amplitudes_gen(wavdir, lyr_dir=None, batch_size=32,
                 startptr += sample_size
                 batch_ind += 1
 
-                if phdir:
+                if lyr_dir:
                     step_phonemes = return_time_phonemes(
                         phonemes, phonemes_times, start_time, num_steps, step_length,
                         phoneme_to_id, step_shift)
@@ -157,7 +157,7 @@ def audio_amplitudes_gen(wavdir, lyr_dir=None, batch_size=32,
                 wavpath = os.path.join(wavdir, curr_wav)
 
                 if lyr_dir:
-                    lyrpath = os.path.join(phdir, curr_wav[:-4] + ".txt")
+                    lyrpath = os.path.join(lyr_dir, curr_wav[:-4] + ".txt")
                 _, current_amps = read(wavpath)
 
                 startptr = 0
