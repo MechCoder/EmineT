@@ -188,7 +188,7 @@ def write_audio(batch, dest_path):
 
 def gen_audio_phonemes_pairs(wavdir=None, phdir=None, batch_size=32, num_steps=40,
                              random_state=None, step_shift=0, wav_dim=200,
-                             path="train"):
+                             path="train", return_phonemes=True):
     """
     Audio raw-amplitude batch generator.
 
@@ -198,7 +198,7 @@ def gen_audio_phonemes_pairs(wavdir=None, phdir=None, batch_size=32, num_steps=4
     num_steps - Number of time steps of each sample.
     """
     rng = np.random.RandomState(random_state)
-    n_samples = samples_per_epoch(wavdir, batch_size, num_steps, wav_dim)
+    # _samples = samples_per_epoch(wavdir, batch_size, num_steps, wav_dim)
 
     if path == "train":
         wavdir = "data/wavs/train"
@@ -211,8 +211,8 @@ def gen_audio_phonemes_pairs(wavdir=None, phdir=None, batch_size=32, num_steps=4
         phdir = "data/single_phonemes/train"
     else:
         phdir = "data/single_phonemes/val"
-    phoneme_to_id = build_phonemes_vocab()
-
+    phoneme_to_id = build_phonemes_vocab(phdir)
+    n_samples = samples_per_epoch(wavdir, batch_size, num_steps, wav_dim) 
     wavfiles = os.listdir(wavdir)
     n_songs = len(wavfiles)
     xs = []
@@ -242,11 +242,11 @@ def gen_audio_phonemes_pairs(wavdir=None, phdir=None, batch_size=32, num_steps=4
         batch_ind = 0
 
         while batch_ind < batch_size:
-            if startptr + sample_size + step_size <= len(current_amps):
+            if startptr + sample_size + wav_dim <= len(current_amps):
                 x = np.reshape(
                     current_amps[startptr: startptr + sample_size], (num_steps, -1))
                 y = np.reshape(
-                    current_amps[startptr + step_size : startptr + sample_size + step_size],
+                    current_amps[startptr + wav_dim : startptr + sample_size + wav_dim],
                     (num_steps, -1))
                 xs.append(x)
                 ys.append(y)

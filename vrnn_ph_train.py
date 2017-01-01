@@ -82,7 +82,7 @@ def variational_loss(y_true, y_pred):
 
 filepath = os.path.join(checkpoint_dir, "{epoch:02d}.hdf5")
 checkpoint_callback = SavePeriodicCheckpoint(
-    filepath, monitor='val_loss', verbose=1, n_epochs=5)
+    filepath, monitor='val_loss', verbose=1, n_epochs=1)
 callbacks_list = [checkpoint_callback]
 
 adam = Adam(lr=0.001, clipnorm=5.0)
@@ -100,11 +100,10 @@ if len(checkpoint_files) != 0:
         os.rename(curr_ckpt, new_name)
     vae.load_weights(new_name)
 
-
 vae.fit_generator(
-    gen_audio_phonemes_pairs(return_phonemes=True, step_shift=step_shift),
+    gen_audio_phonemes_pairs(step_shift=step_shift, return_phonemes=True),
     samples_per_epoch=batch_size*545, verbose=2,
-    nb_epoch=50,
+    nb_epoch=1,
     validation_data=gen_audio_phonemes_pairs(
-        return_phonemes=True, path="valid", step_shift=step_shift),
+        path="valid", step_shift=step_shift, return_phonemes=True),
     nb_val_samples=batch_size*147, callbacks=callbacks_list)
