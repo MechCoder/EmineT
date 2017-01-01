@@ -7,6 +7,7 @@ from callbacks import SavePeriodicCheckpoint
 
 from math import pi
 from utils import gen_audio_phonemes_pairs
+from utils import audio_amplitudes_gen
 
 # Hyper-Parameters
 hidden_size = 1000
@@ -89,9 +90,10 @@ adam = Adam(lr=0.001, clipnorm=5.0)
 vae = Model(input=[input_, input_shift, ph_input], output=out_mu)
 encoder = Model(input=[input_, input_shift, ph_input], output=Z_mean)
 
-train_gen = gen_audio_phonemes_pairs(
-    wavdir="data/wavs/train", phdir="data/single_phonemes/train",
-    step_shift=step_shift)
+train_gen = audio_amplitudes_gen(
+    wavdir="data/wavs/train", lyr_dir="data/single_phonemes/train",
+    batch_size=batch_size, num_steps=num_steps,
+    step_shift=step_shift, wav_dim=in_dim)
 vae.compile(optimizer=adam, loss=variational_loss)
 vae.fit_generator(
     train_gen,
