@@ -1,6 +1,6 @@
 import argparse
 
-def parse_args(mode="train", use_phonemes=True):
+def parse_args(mode="train", use_phonemes=False):
     parser = argparse.ArgumentParser()
 
     if use_phonemes:
