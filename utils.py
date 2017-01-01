@@ -84,7 +84,7 @@ def samples_per_epoch(wavdir, batch_size=32, num_steps=40, wav_dim=200):
     return n_samples + int(remainder / batch_dim)
 
 
-def audio_amplitudes_gen(wavdir, lyr_dir=None, batch_size=32,
+def audio_amplitudes_gen(wavdir, lyrdir=None, batch_size=32,
                          num_steps=40, random_state=None, step_shift=0,
                          wav_dim=200):
     """
@@ -186,9 +186,8 @@ def write_audio(batch, dest_path):
     write(dest_path, 16000, (batch.ravel() * 32768).astype(np.int16))
 
 
-def gen_audio_phonemes_pairs(wavdir=None, phdir=None, batch_size=32, num_steps=40,
-                             random_state=None, step_shift=0, wav_dim=200,
-                             path="train", return_phonemes=True):
+def gen_audio_phonemes_pairs(wavdir, lyrdir=None, batch_size=32, num_steps=40,
+                             random_state=None, step_shift=0, wav_dim=200):
     """
     Audio raw-amplitude batch generator.
 
@@ -198,21 +197,8 @@ def gen_audio_phonemes_pairs(wavdir=None, phdir=None, batch_size=32, num_steps=4
     num_steps - Number of time steps of each sample.
     """
     rng = np.random.RandomState(random_state)
-    # _samples = samples_per_epoch(wavdir, batch_size, num_steps, wav_dim)
-
-    if path == "train":
-        wavdir = "data/wavs/train"
-        limit_counter = 545
-    else:
-        limit_counter = 147
-        wavdir = "data/wavs/valid"
-
-    if path == "train":
-        phdir = "data/single_phonemes/train"
-    else:
-        phdir = "data/single_phonemes/val"
-    phoneme_to_id = build_phonemes_vocab(phdir)
-    n_samples = samples_per_epoch(wavdir, batch_size, num_steps, wav_dim) 
+    phoneme_to_id = build_phonemes_vocab(lyrdir)
+    n_samples = samples_per_epoch(wavdir, batch_size, num_steps, wav_dim)
     wavfiles = os.listdir(wavdir)
     n_songs = len(wavfiles)
     xs = []
@@ -224,7 +210,7 @@ def gen_audio_phonemes_pairs(wavdir=None, phdir=None, batch_size=32, num_steps=4
 
     curr_wav = wavfiles[song_ind % n_songs]
     wavpath = os.path.join(wavdir, wavfiles[song_ind % n_songs])
-    lyrpath = os.path.join(phdir, curr_wav[:-4] + ".txt")
+    lyrpath = os.path.join(lyrdir, curr_wav[:-4] + ".txt")
 
     _, current_amps = read(wavpath)
     current_amps = current_amps / 32768.0
@@ -261,7 +247,7 @@ def gen_audio_phonemes_pairs(wavdir=None, phdir=None, batch_size=32, num_steps=4
                 song_ind += 1
                 curr_wav = wavfiles[song_ind % n_songs]
                 wavpath = os.path.join(wavdir, curr_wav)
-                lyrpath = os.path.join(phdir, curr_wav[:-4] + ".txt")
+                lyrpath = os.path.join(lyrdir, curr_wav[:-4] + ".txt")
                 _, current_amps = read(wavpath)
 
                 startptr = 0
@@ -272,12 +258,12 @@ def gen_audio_phonemes_pairs(wavdir=None, phdir=None, batch_size=32, num_steps=4
                 start_time = 0.0
 
         batch_ind = 0
-        if counter % limit_counter == 0:
+        if counter % n_samples == 0:
             rng.shuffle(wavfiles)
         xs = np.array(xs)
         ys = np.array(ys)
 
-        if return_phonemes:
+        if lyrdir:
             batch_phonemes = np.array(batch_phonemes)
             yield ([xs, ys, batch_phonemes], ys)
         else:
