@@ -89,21 +89,20 @@ adam = Adam(lr=0.001, clipnorm=5.0)
 vae = Model(input=[input_, input_shift, ph_input], output=out_mu)
 encoder = Model(input=[input_, input_shift, ph_input], output=Z_mean)
 
+train_gen = gen_audio_phonemes_pairs(
+    wavdir="data/wavs/train", phdir="data/single_phonemes/train",
+    step_shift=step_shift)
 vae.compile(optimizer=adam, loss=variational_loss)
-checkpoint_files = sorted(os.listdir("vrnn_lyrics_checkpoints"))
-if len(checkpoint_files) != 0:
-    print("Loading weights")
-    # Prevents the previous checkpoints from getting over-written
-    for c in checkpoint_files:
-        curr_ckpt = os.path.join(checkpoint_dir, c)
-        new_name = os.path.join(checkpoint_dir, "prev_" + c)
-        os.rename(curr_ckpt, new_name)
-    vae.load_weights(new_name)
-
 vae.fit_generator(
-    gen_audio_phonemes_pairs(step_shift=step_shift, return_phonemes=True),
+    train_gen,
     samples_per_epoch=batch_size*545, verbose=2,
-    nb_epoch=1,
-    validation_data=gen_audio_phonemes_pairs(
-        path="valid", step_shift=step_shift, return_phonemes=True),
-    nb_val_samples=batch_size*147, callbacks=callbacks_list)
+    nb_epoch=1, callbacks=callbacks_list)
+
+
+# vae.fit_generator(
+#     gen_audio_phonemes_pairs(step_shift=step_shift, return_phonemes=True),
+#     samples_per_epoch=batch_size*545, verbose=2,
+#     nb_epoch=1,
+#     validation_data=gen_audio_phonemes_pairs(
+#         path="valid", step_shift=step_shift, return_phonemes=True),
+#     nb_val_samples=batch_size*147, callbacks=callbacks_list)
