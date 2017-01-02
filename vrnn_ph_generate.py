@@ -33,13 +33,13 @@ def generate(wav_dir, lyr_dir, model, write_dir, lstm_size=1000, num_steps=40,
         wav_dim=wav_dim, infinite=False, step_shift=step_shift)
 
     counter = 0
-    for (x_t, y_t), true in gen:
+    for (x_t, y_t, ph), true in gen:
 
         true_path = os.path.join(write_dir, "%d_true.wav" % counter)
         gen_dir = os.path.join(write_dir, str(counter))
         os.makedirs(gen_dir)
         for i in range(num_gen):
-            pred = decoder.predict([x_t, y_t], batch_size=batch_size)
+            pred = decoder.predict([x_t, y_t, ph], batch_size=batch_size)
 
             print("Writing audio %d" % counter)
             pred_path = os.path.join(gen_dir, "%d.wav" % i)
