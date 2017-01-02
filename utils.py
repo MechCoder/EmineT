@@ -1,5 +1,8 @@
-import os
+import json
 import numpy as np
+import os
+import shutil
+import sys
 
 from scipy.io.wavfile import read
 from scipy.io.wavfile import write
@@ -46,29 +49,6 @@ def return_time_phonemes(phonemes, phonemes_times, start_time, num_steps,
     return step_phonemes
 
 
-def init_phonemes(phonemes, phonemes_times, start_time, num_steps,
-                  step_length, phoneme_dict):
-    """
-    Returns phonemes of len(num_steps) with phonemes[i] corresponding
-    to the number of phonemes at that time step.
-    """
-    start_time = start_time
-    end_time = start_time + num_steps * step_length
-
-    start_ind = np.searchsorted(phonemes_times, start_time) - 1
-    if start_ind == -1:
-        start_ind = 0
-    end_ind = np.searchsorted(phonemes_times, end_time)
-
-    # Encode all the phoneme information in the first step. Zero out
-    # everything else as a hack to merge in only the first step.
-    step_phonemes = np.zeros((num_steps, len(phoneme_dict)))
-
-    for ph in phonemes[start_ind: end_ind]:
-        step_phonemes[0, phoneme_dict[ph]] += 1
-    return step_phonemes
-
-
 def samples_per_epoch(wavdir, batch_size=32, num_steps=40, wav_dim=200):
     wavfiles = os.listdir(wavdir)
     batch_dim = wav_dim * num_steps * batch_size
@@ -100,6 +80,47 @@ def split_words(lyrics_dir, num_words=3):
         per_lines = [words[j + startptr] for j in range(rem)]
         split_lines.write(" ".join(per_lines) + "\n")
         split_lines.close()
+
+
+def synchronize(song_dir, lyrics_dir, out_dir="time_stamp"):
+    """
+    Synchronize songs with lyrics and outputs a directory with files
+    containing the start time of each phoneme.
+    """
+    if os.path.exists("json_dir"):
+        shutil.rmtree("json_dir")
+    os.mkdir("json_dir")
+
+    if not os.path.exists(out_dir):
+        os.mkdir(out_dir)
+
+    songs = os.listdir(song_dir)
+    for song in songs:
+        song_path = os.path.join(song_dir, song)
+        lyric = os.path.join(lyrics_dir, song[:-4] + ".txt")
+        json_path = os.path.join("json_dir", song[:-4] + ".json")
+        time_path = os.path.join(out_dir, song[:-4] + ".txt")
+
+        os.system("python%d -m aeneas.tools.execute_task \
+                  %s %s 'task_language=eng|os_task_file_format=json|is_text_type=plain' %s" %
+                  (sys.version_info[0], song_path, lyric, json_path))
+
+        lines = []
+        json_file = open(json_path, "r")
+        for time_stamp in json.load(json_file)['fragments']:
+            end_time = float(time_stamp["end"])
+            start_time = float(time_stamp["begin"])
+            phonemes = str(time_stamp['lines'][0]).split(" ")
+            interval = (end_time - start_time) / len(phonemes)
+            times = np.arange(len(phonemes)) * interval + start_time
+            for ph, st_time in zip(phonemes, times):
+                lines.append(ph + " " + str(st_time) + "\n")
+
+        b = open(time_path, "w")
+        b.writelines(lines)
+        b.close()
+
+    shutil.rmtree("json_dir")
 
 
 def audio_amplitudes_gen(wavdir, lyr_dir=None, batch_size=32,
