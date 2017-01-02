@@ -99,6 +99,9 @@ def build_vrnn(lstm_size=1000, num_steps=40,
         x_given_z = vae.layers[-3](sampled_from_prior)
         merge_samples = merge([hidden_to_out, x_given_z], mode="sum")
         gen_x = vae.layers[-1](merge_samples)
-        decoder = Model(input=[input_, input_shift], output=gen_x)
+        if use_phonemes:
+            decoder = Model(input=[input_, input_shift, ph_input], output=gen_x)
+        else:
+            decoder = Model(input=[input_, input_shift], output=gen_x)
         return vae, decoder
     return vae
