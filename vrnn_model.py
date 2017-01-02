@@ -19,7 +19,7 @@ from utils import samples_per_epoch
 def build_vrnn(lstm_size=1000, num_steps=40,
                z_dim=100, batch_size=32, fc_dim=400, wav_dim=200,
                learning_rate=0.001, clip_grad=5.0, use_phonemes=False,
-               mode="train", step_shift=0):
+               mode="train"):
     input_ = Input(batch_shape=(batch_size, num_steps, wav_dim))
 
     # Input but shifed by one-time step
@@ -31,13 +31,13 @@ def build_vrnn(lstm_size=1000, num_steps=40,
         # the Embedding layer does not work with clipnorm.
         # XXX: https://github.com/fchollet/keras/issues/3859
         ph_input = Input(batch_shape=(batch_size, num_steps, 40))
-        counts = K.expand_dims(K.sum(ph_input, axis=-1), -1)
+        # counts = K.expand_dims(K.sum(ph_input, axis=-1), -1)
 
         # Merge input from phonemes and audio.
         cbow = TimeDistributed(Dense(fc_dim))(ph_input)
-        cbow_averaged = Lambda(lambda x: x / counts)(cbow)
+        # cbow_averaged = Lambda(lambda x: x / counts)(cbow)
         input_layer2 = TimeDistributed(Dense(fc_dim, activation="relu"))(input_)
-        to_lstm = merge([input_layer2, cbow_averaged], mode="sum")
+        to_lstm = merge([input_layer2, cbow], mode="sum")
     else:
         to_lstm = TimeDistributed(Dense(fc_dim, activation="tanh"))(input_)
 
