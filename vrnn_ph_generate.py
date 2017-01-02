@@ -29,7 +29,7 @@ def generate(wav_dir, lyr_dir, model, write_dir, lstm_size=1000, num_steps=40,
     vae.load_weights(model)
 
     gen = audio_amplitudes_gen(
-        wavdir=wav_dir, num_steps=num_steps, batch_size=batch_size,
+        wavdir=wav_dir, lyr_dir=lyr_dir, num_steps=num_steps, batch_size=batch_size,
         wav_dim=wav_dim, infinite=False, step_shift=step_shift)
 
     counter = 0
