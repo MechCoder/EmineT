@@ -24,7 +24,8 @@ def generate(wav_dir, lyr_dir, model, write_dir, lstm_size=1000, num_steps=40,
              num_gen=1, step_shift=0):
     vae, decoder = build_vrnn(
         lstm_size=lstm_size, num_steps=num_steps, z_dim=z_dim,
-        batch_size=batch_size, fc_dim=fc_dim, wav_dim=wav_dim, mode="generate")
+        batch_size=batch_size, fc_dim=fc_dim, wav_dim=wav_dim, mode="generate",
+        use_phonemes=True)
     vae.load_weights(model)
 
     gen = audio_amplitudes_gen(

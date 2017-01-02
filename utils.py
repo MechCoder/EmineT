@@ -170,7 +170,7 @@ def audio_amplitudes_gen(wavdir, lyr_dir=None, batch_size=32,
                 start_time = 0.0
 
         batch_ind = 0
-        if song_ind % n_songs == 0 and song_ind != 0::
+        if song_ind % n_songs == 0 and song_ind != 0:
             if infinite:
                 rng.shuffle(wavfiles)
             else:
