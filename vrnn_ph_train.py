@@ -28,19 +28,18 @@ def train(wavdir, lyr_dir):
     input_ = Input(batch_shape=(batch_size, num_steps, in_dim))
     input_shift = Input(batch_shape=(batch_size, num_steps, in_dim))
     ph_input = Input(batch_shape=(batch_size, num_steps, phoneme_length))
-    counts = K.expand_dims(K.sum(ph_input, axis=-1), -1)
+    # counts = K.expand_dims(K.sum(ph_input, axis=-1), -1)
 
     # Merge input from phonemes and audio.
     cbow = TimeDistributed(Dense(phonemes_embed_size))(ph_input)
-    cbow_averaged = Lambda(lambda x: x / counts)(cbow)
+    # cbow_averaged = Lambda(lambda x: x / counts)(cbow)
     input_layer2 = TimeDistributed(Dense(phonemes_embed_size, activation="relu"))(input_)
-    lyrics_plus_audio = merge([input_layer2, cbow_averaged], mode="sum")
+    lyrics_plus_audio = merge([input_layer2, cbow], mode="sum")
 
     # Vanilla LSTM
     hidden = LSTM(hidden_size, return_sequences=True)(lyrics_plus_audio)
 
-    # Prior on the latent variables (z_{t + 1}) is Dependent on the input
-    # hidden_firs = TimeDistributed(Dense(z_dim, activation="relu"))(lstm_hidden)
+    # Prior on the latent variables (z_{t + 1}) is Dependent on the input    
     prior_mean = TimeDistributed(Dense(z_dim, activation="tanh"))(hidden)
     prior_log_sigma = TimeDistributed(Dense(z_dim, activation="relu"))(hidden)
 
@@ -83,7 +82,7 @@ def train(wavdir, lyr_dir):
         return (gaussian_log_likelihood(y_true, y_pred) +
                 KL_divergence(Z_mean, Z_log_sigma, prior_mean, prior_log_sigma))
 
-    filepath = os.path.join(checkpoint_dir, "{epoch:02d}.hdf5")
+    filepath = os.path.join(checkpoint_dir, "model.hdf5")
     checkpoint_callback = SavePeriodicCheckpoint(
         filepath, monitor='val_loss', verbose=1, n_epochs=1)
     callbacks_list = [checkpoint_callback]
@@ -93,7 +92,8 @@ def train(wavdir, lyr_dir):
     encoder = Model(input=[input_, input_shift, ph_input], output=Z_mean)
 
     train_gen = audio_amplitudes_gen(
-        wavdir=wavdir, lyr_dir=lyr_dir,
+        wavdir=wavdir,
+        lyr_dir=lyr_dir,
         batch_size=batch_size, num_steps=num_steps,
         step_shift=step_shift, wav_dim=in_dim)
     vae.compile(optimizer=adam, loss=variational_loss)
@@ -101,6 +101,8 @@ def train(wavdir, lyr_dir):
         train_gen,
         samples_per_epoch=batch_size*545, verbose=2,
         nb_epoch=1, callbacks=callbacks_list)
+    vae.save("vae.hdf5")
+
 
 if __name__ == "__main__":
     args = parse_args(mode="train", use_phonemes=True)
